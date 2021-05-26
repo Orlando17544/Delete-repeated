@@ -1,0 +1,137 @@
+#!/bin/bash
+
+GREEN='\033[0;32m'
+ORANGE='\033[0;33m' 
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+NC='\033[0m' # No color
+
+viewRepeated () {
+	read -p "Enter filepaths: (You are here: $(pwd)) " -a filesArray
+	echo "Processing..."
+
+	error=false
+
+	for file in "${filesArray[@]}"; do
+		if [[ ! -e "$file" ]]; then
+			echo -e "${ORANGE}Warning: "$file" file doesn't exist${NC}"
+			error=true
+		fi
+	done
+
+	if $error; then
+		echo -e "${YELLOW}Warning: filepaths could have spaces or parenthesis, escape them with backslash (find . -type f -name '*' | perl -p -e 's/ /\\\\\ /g' | perl -p -e 's/\\\(/\\\\\(/g' | perl -p -e 's/\\\)/\\\\\)/g' | perl -p -e 's/\\\n$/ /g' | perl -p -e 's/ $/\\\n/g')${NC}"
+	fi
+
+	md5sumsPaths="$(md5sum "${filesArray[@]}" 2> /dev/null | sort -k 1 | perl -p -e 's/  /:/g')"
+
+	md5sums="$(echo "$md5sumsPaths" | cut -f 1 -d ':')"
+	paths="$(echo "$md5sumsPaths" | cut -f 2 -d ':' | perl -p -e 's/ /\\ /g' | perl -p -e 's/\(/\\(/g' | perl -p -e 's/\)/\\)/g')"
+
+	IFS=$'\n' read -a md5sumsArray -d '' <<< "$md5sums"
+	IFS=$'\n' read -a pathsArray -d '' <<< "$paths"
+
+	repeated=0
+
+	for (( i=0; i<${#md5sumsArray[@]}-1; i=i+1 )); do
+		repeatedPaths="${pathsArray[i]}"
+		for (( j=i+1; j<${#md5sumsArray[@]}; j=j+1 )); do
+			if [[ ${md5sumsArray[i]} == ${md5sumsArray[j]} && $((j + 1)) == ${#md5sumsArray[@]} ]]; then
+				repeated=$((repeated + 1))
+				repeatedPaths="$repeatedPaths ${pathsArray[j]}"
+				echo -e "${GREEN}Equal files are: $repeatedPaths${NC}"
+				i=$j
+				break
+			elif [[ ${md5sumsArray[i]} == ${md5sumsArray[j]} ]]; then
+				repeated=$((repeated + 1))
+				repeatedPaths="$repeatedPaths ${pathsArray[j]}"
+			else 	
+				if [[ "$repeatedPaths" != "${pathsArray[i]}" ]]; then
+					echo -e "${GREEN}Equal files are: $repeatedPaths${NC}"
+				fi
+				i=$((j-1))
+				break
+			fi
+		done
+	done
+	echo "$repeated files were repeated"
+	read -p "Press enter to return to the menu "
+}
+
+deleteRepeated () {
+	read -p "Enter filepaths: (You are here: $(pwd)) " -a filesArray
+	echo "Processing..."
+
+	error=false
+
+	for file in "${filesArray[@]}"; do
+		if [[ ! -e "$file" ]]; then
+			echo -e "${ORANGE}Warning: "$file" file doesn't exist${NC}"
+			error=true
+		fi
+	done
+
+	if $error; then
+		echo -e "${YELLOW}Warning: filepaths could have spaces or parenthesis, escape them with backslash (find . -type f -name '*' | perl -p -e 's/ /\\\\\ /g' | perl -p -e 's/\\\(/\\\\\(/g' | perl -p -e 's/\\\)/\\\\\)/g' | perl -p -e 's/\\\n$/ /g' | perl -p -e 's/ $/\\\n/g')${NC}"
+	fi
+
+	md5sumsPaths="$(md5sum "${filesArray[@]}" 2> /dev/null | sort -k 1 | perl -p -e 's/  /:/g')"
+
+	md5sums="$(echo "$md5sumsPaths" | cut -f 1 -d ':')"
+	paths="$(echo "$md5sumsPaths" | cut -f 2 -d ':' | perl -p -e 's/ /\\ /g' | perl -p -e 's/\(/\\(/g' | perl -p -e 's/\)/\\)/g')"
+
+	IFS=$'\n' read -a md5sumsArray -d '' <<< "$md5sums"
+	IFS=$'\n' read -a pathsArray -d '' <<< "$paths"
+
+	deleted=0
+
+	for (( i=0; i<${#md5sumsArray[@]}-1; i=i+1 )); do
+		for (( j=i+1; j<${#md5sumsArray[@]}; j=j+1 )); do
+			if [[ ${md5sumsArray[i]} == ${md5sumsArray[j]} && $((j + 1)) == ${#md5sumsArray[@]} ]]; then
+				rm "${pathsArray[j]}"
+				echo -e "${GREEN}It was deleted: ${pathsArray[j]}${NC}"
+				deleted=$((deleted + 1))
+				i=$j
+				break
+			elif [[ ${md5sumsArray[i]} == ${md5sumsArray[j]} ]]; then
+				rm "${pathsArray[j]}"
+				echo -e "${GREEN}It was deleted: ${pathsArray[j]}${NC}"
+				deleted=$((deleted + 1))
+			else 	
+				i=$((j-1))
+				break
+			fi
+		done
+	done
+	echo "$deleted files were deleted"
+	read -p "Press enter to return to the menu "
+}
+
+while true; do
+	clear
+	cat <<- _EOF_
+		Please Select:
+		
+		1. View repeated
+		2. Delete repeated
+
+		It's recommended to generate the filepaths with: find . -type f -name '*' | perl -p -e 's/ /\\\ /g' | perl -p -e 's/\(/\\\(/g' | perl -p -e 's/\)/\\\)/g' | perl -p -e 's/\n$/ /g' | perl -p -e 's/ $/\n/g'
+
+		It's accepted absolute pathnames and relative pathnames
+
+	_EOF_
+
+	read -p "Enter selection [1-2] > " selection
+
+	if [[ "$selection" =~ ^[1-2]$ ]]; then
+		if [[ "$selection" -eq 1 ]]; then
+			viewRepeated
+		else 
+			deleteRepeated
+		fi
+	else 
+		echo -e "${RED}Invalid entry${NC}"
+		sleep 3
+	fi
+done
+	
