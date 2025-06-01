@@ -7,23 +7,9 @@ RED='\033[0;31m'
 NC='\033[0m' # No color
 
 viewRepeated () {
-	read -p "Enter filepaths: (You are here: $(pwd)) " -a filesArray
 	echo "Processing..."
 
-	error=false
-
-	for file in "${filesArray[@]}"; do
-		if [[ ! -e "$file" ]]; then
-			echo -e "${ORANGE}Warning: "$file" file doesn't exist${NC}"
-			error=true
-		fi
-	done
-
-	if $error; then
-		echo -e "${YELLOW}Warning: filepaths could have spaces or parenthesis, escape them with backslash (find . -type f -name '*' | perl -p -e 's/ /\\\\\ /g' | perl -p -e 's/\\\(/\\\\\(/g' | perl -p -e 's/\\\)/\\\\\)/g' | perl -p -e 's/\\\n$/ /g' | perl -p -e 's/ $/\\\n/g')${NC}"
-	fi
-
-	md5sumsPaths="$(md5sum "${filesArray[@]}" 2> /dev/null | sort -k 1 | perl -p -e 's/  /:/g')"
+	md5sumsPaths="$(find . -iname '*.jpg' -exec md5sum {} \; 2> /dev/null | sort -k 1 | perl -p -e 's/  /:/g')"
 
 	md5sums="$(echo "$md5sumsPaths" | cut -f 1 -d ':')"
 	paths="$(echo "$md5sumsPaths" | cut -f 2 -d ':' | perl -p -e 's/ /\\ /g' | perl -p -e 's/\(/\\(/g' | perl -p -e 's/\)/\\)/g')"
@@ -59,23 +45,9 @@ viewRepeated () {
 }
 
 deleteRepeated () {
-	read -p "Enter filepaths: (You are here: $(pwd)) " -a filesArray
 	echo "Processing..."
 
-	error=false
-
-	for file in "${filesArray[@]}"; do
-		if [[ ! -e "$file" ]]; then
-			echo -e "${ORANGE}Warning: "$file" file doesn't exist${NC}"
-			error=true
-		fi
-	done
-
-	if $error; then
-		echo -e "${YELLOW}Warning: filepaths could have spaces or parenthesis, escape them with backslash (find . -type f -name '*' | perl -p -e 's/ /\\\\\ /g' | perl -p -e 's/\\\(/\\\\\(/g' | perl -p -e 's/\\\)/\\\\\)/g' | perl -p -e 's/\\\n$/ /g' | perl -p -e 's/ $/\\\n/g')${NC}"
-	fi
-
-	md5sumsPaths="$(md5sum "${filesArray[@]}" 2> /dev/null | sort -k 1 | perl -p -e 's/  /:/g')"
+	md5sumsPaths="$(find . -iname '*.jpg' -exec md5sum {} \; 2> /dev/null | sort -k 1 | perl -p -e 's/  /:/g')"
 
 	md5sums="$(echo "$md5sumsPaths" | cut -f 1 -d ':')"
 	paths="$(echo "$md5sumsPaths" | cut -f 2 -d ':' | perl -p -e 's/ /\\ /g' | perl -p -e 's/\(/\\(/g' | perl -p -e 's/\)/\\)/g')"
@@ -114,10 +86,6 @@ while true; do
 		
 		1. View repeated
 		2. Delete repeated
-
-		It's recommended to generate the filepaths with: find . -type f -name '*' | perl -p -e 's/ /\\\ /g' | perl -p -e 's/\(/\\\(/g' | perl -p -e 's/\)/\\\)/g' | perl -p -e 's/\n$/ /g' | perl -p -e 's/ $/\n/g'
-
-		It's accepted absolute pathnames and relative pathnames
 
 	_EOF_
 
