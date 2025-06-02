@@ -9,7 +9,7 @@ NC='\033[0m' # No color
 viewRepeated () {
 	echo "Processing..."
 
-	md5sumsPaths="$(find . -iname '*.jpg' -exec md5sum {} \; 2> /dev/null | sort -k 1 | perl -p -e 's/  /:/g')"
+	md5sumsPaths="$(find . -iname '*' -exec md5sum {} \; 2> /dev/null | sort -k 1 | perl -p -e 's/  /:/g')"
 
 	md5sums="$(echo "$md5sumsPaths" | cut -f 1 -d ':')"
 	paths="$(echo "$md5sumsPaths" | cut -f 2 -d ':' | perl -p -e 's/ /\\ /g' | perl -p -e 's/\(/\\(/g' | perl -p -e 's/\)/\\)/g')"
@@ -47,7 +47,7 @@ viewRepeated () {
 deleteRepeated () {
 	echo "Processing..."
 
-	md5sumsPaths="$(find . -iname '*.jpg' -exec md5sum {} \; 2> /dev/null | sort -k 1 | perl -p -e 's/  /:/g')"
+	md5sumsPaths="$(find . -iname '*' -exec md5sum {} \; 2> /dev/null | sort -k 1 | perl -p -e 's/  /:/g')"
 
 	md5sums="$(echo "$md5sumsPaths" | cut -f 1 -d ':')"
 	paths="$(echo "$md5sumsPaths" | cut -f 2 -d ':' | perl -p -e 's/ /\\ /g' | perl -p -e 's/\(/\\(/g' | perl -p -e 's/\)/\\)/g')"
